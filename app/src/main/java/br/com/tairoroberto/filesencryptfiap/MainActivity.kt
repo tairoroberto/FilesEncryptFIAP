@@ -14,6 +14,8 @@ import android.util.Log
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
+import br.com.tairoroberto.filesencryptfiap.database.AppDatabase
+import br.com.tairoroberto.filesencryptfiap.database.Item
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.IOException
 import java.math.BigInteger
@@ -183,6 +185,11 @@ class MainActivity : AppCompatActivity() {
                 editor.apply()
                 encryptedText?.setText(encryptedPassword)
 
+                val item = Item()
+                item.content = encryptedPassword
+                AppDatabase.getInstance(this).itemsDao().deleteAll()
+                AppDatabase.getInstance(this).itemsDao().add(item)
+
             } catch (e: UserNotAuthenticatedException) {
                 e.printStackTrace()
                 showAuthenticationScreen(SAVE_CREDENTIALS_REQUEST_CODE)
@@ -214,11 +221,15 @@ class MainActivity : AppCompatActivity() {
         decryptedText?.setText(string)
     }
 
-    fun saveDataWithoutEncrypt(view: View){
+    fun saveDataWithoutEncrypt(view: View) {
         val sharedPreferences: SharedPreferences = this.getPreferences(android.content.Context.MODE_PRIVATE)
         val editor: SharedPreferences.Editor = sharedPreferences.edit()
         editor.putString("originalText", tvOriginalText?.text.toString())
         editor.apply()
+
+        val item = Item()
+        item.content = tvOriginalText?.text.toString()
+        AppDatabase.getInstance(this).itemsDao().add(item)
     }
 
     private fun showAuthenticationScreen(requestCode: Int) {
