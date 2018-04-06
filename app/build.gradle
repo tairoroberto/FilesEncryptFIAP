@@ -52,4 +52,8 @@ dependencies {
     implementation "android.arch.persistence.room:runtime:${rootProject.arch}"
     implementation "android.arch.persistence.room:rxjava2:${rootProject.arch}"
     kapt "android.arch.persistence.room:compiler:${rootProject.arch}"
+
+    // Async Anko
+    implementation "org.jetbrains.anko:anko-coroutines:${rootProject.anko_version}"
+    implementation "org.jetbrains.anko:anko-commons:${rootProject.anko_version}"
 }

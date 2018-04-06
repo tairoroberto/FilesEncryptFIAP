@@ -17,6 +17,8 @@ import android.widget.Toast
 import br.com.tairoroberto.filesencryptfiap.database.AppDatabase
 import br.com.tairoroberto.filesencryptfiap.database.Item
 import kotlinx.android.synthetic.main.activity_main.*
+import org.jetbrains.anko.coroutines.experimental.bg
+import org.jetbrains.anko.longToast
 import java.io.IOException
 import java.math.BigInteger
 import java.security.*
@@ -30,15 +32,17 @@ import javax.security.auth.x500.X500Principal
 
 class MainActivity : AppCompatActivity() {
 
-    val TAG = "SimpleKeystoreApp"
-    public val AUTHENTICATION_DURATION_SECONDS = 30
-    public val KEY_ALIAS = "MY_KEY_ALIAS"
+    companion object {
+        val TAG = "SimpleKeystoreApp"
+        val AUTHENTICATION_DURATION_SECONDS = 30
+        val KEY_ALIAS = "MY_KEY_ALIAS"
 
-    private val CHARSET_NAME = Charsets.UTF_8
-    private val ANDROID_KEY_STORE = "AndroidKeyStore"
-    private val TRANSFORMATION = KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7
-    private val keyguardManager: KeyguardManager? = null
-    private val SAVE_CREDENTIALS_REQUEST_CODE = 1
+        val CHARSET_NAME = Charsets.UTF_8
+        val ANDROID_KEY_STORE = "AndroidKeyStore"
+        val TRANSFORMATION = KeyProperties.KEY_ALGORITHM_AES + "/" + KeyProperties.BLOCK_MODE_CBC + "/" + KeyProperties.ENCRYPTION_PADDING_PKCS7
+        val keyguardManager: KeyguardManager? = null
+        val SAVE_CREDENTIALS_REQUEST_CODE = 1
+    }
 
     val generator: KeyPairGenerator = KeyPairGenerator.getInstance("RSA", "AndroidKeyStore")
     var keyPair: KeyPair? = null
@@ -117,7 +121,7 @@ class MainActivity : AppCompatActivity() {
                         .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                         .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
                         // Requerida a autenticação de dispositivo função. Função de autenticação de dispositivos é OFF excepção de segurança ocorre
-                        .setUserAuthenticationRequired(true)
+                        .setUserAuthenticationRequired(false)
                         .build())
                 keyPair = generator.generateKeyPair()
                 val cipher: Cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
@@ -187,8 +191,13 @@ class MainActivity : AppCompatActivity() {
 
                 val item = Item()
                 item.content = encryptedPassword
-                AppDatabase.getInstance(this).itemsDao().deleteAll()
-                AppDatabase.getInstance(this).itemsDao().add(item)
+
+                bg {
+                    AppDatabase.getInstance(this).itemsDao().deleteAll()
+                    AppDatabase.getInstance(this).itemsDao().add(item)
+                }
+
+                longToast("Encriptado e salvo")
 
             } catch (e: UserNotAuthenticatedException) {
                 e.printStackTrace()
@@ -229,7 +238,12 @@ class MainActivity : AppCompatActivity() {
 
         val item = Item()
         item.content = tvOriginalText?.text.toString()
-        AppDatabase.getInstance(this).itemsDao().add(item)
+
+        bg {
+            AppDatabase.getInstance(this).itemsDao().add(item)
+            AppDatabase.getInstance(this).itemsDao().deleteAll()
+        }
+        longToast("Salvo sem encriptar")
     }
 
     private fun showAuthenticationScreen(requestCode: Int) {
